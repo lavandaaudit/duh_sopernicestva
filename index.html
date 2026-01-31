@@ -7,8 +7,8 @@
     <style>
         body {
             margin: 0;
-            background: radial-gradient(ellipse at center, #080012 0%, #000 75%);
-            color: #e0d8ff;
+            background: radial-gradient(ellipse at center, #0a0015 0%, #000002 68%, #000 100%);
+            color: #d0c8ff;
             font-family: 'Segoe UI', system-ui, sans-serif;
             overflow: hidden;
         }
@@ -23,7 +23,7 @@
             pointer-events: none;
             font-size: 0.82em;
             line-height: 1.38;
-            text-shadow: 0 0 9px #200040, 0 0 18px #400080;
+            text-shadow: 0 0 9px #1a0033, 0 0 18px #330066;
             letter-spacing: 0.3px;
             opacity: 0.92;
             user-select: none;
@@ -31,13 +31,13 @@
         #ui h1 {
             margin: 0 0 6px 0;
             font-size: 1.24em;
-            background: linear-gradient(90deg, #c4a8ff, #ff8ad8, #ff6ac2);
+            background: linear-gradient(90deg, #7dd3ff, #a78dff, #ff78d2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: 1px;
         }
-        .civ-a { color: #b399ff; text-shadow: 0 0 10px #b399ff; }
-        .civ-b { color: #ff7ac8; text-shadow: 0 0 10px #ff7ac8; }
+        .civ-a { color: #5ac8ff; text-shadow: 0 0 10px #5ac8ff; }
+        .civ-b { color: #d02b6e; text-shadow: 0 0 12px #d02b6e; }
         .stats, .space-info {
             margin-top: 4px;
             opacity: 0.9;
@@ -58,7 +58,7 @@
         .timer {
             font-family: monospace;
             letter-spacing: 0.8px;
-            color: #d0c0ff;
+            color: #c0b0ff;
         }
     </style>
 </head>
@@ -66,7 +66,7 @@
     <canvas id="c"></canvas>
     <div id="ui">
         <h1>🌌 IBONARIUM</h1>
-        
+       
         <div class="space-info">
             <div><span class="label">Kp:</span> <span id="kp">2.3</span></div>
             <div><span class="label">Flares:</span> <span id="flare">None</span></div>
@@ -75,7 +75,6 @@
             <div><span class="label">Bz:</span> <span id="bz">+1.2</span> nT</div>
             <div><span class="label">Dst:</span> <span id="dst">-18</span> nT</div>
         </div>
-
         <div class="stats">
             <span class="civ-a">Order</span> <span id="pct-a">0.0%</span>  |
             <span class="civ-b">Flux</span> <span id="pct-b">0.0%</span><br>
@@ -91,7 +90,6 @@
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
         let w, h;
-
         function resize() {
             w = canvas.width = window.innerWidth;
             h = canvas.height = window.innerHeight;
@@ -99,32 +97,26 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Дата запуску — сьогодні о 00:00 за місцевим часом
         const launchDate = new Date();
         launchDate.setHours(0, 0, 0, 0);
-        
-        // Виводимо дату запуску в зрозумілому форматі
+       
         const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        document.getElementById('launch-date').textContent = 
+        document.getElementById('launch-date').textContent =
             launchDate.toLocaleDateString('uk-UA', options) + ' о 00:00';
 
         function updateTimer() {
             const now = new Date();
             const diffMs = now - launchDate;
             const diffSec = Math.floor(diffMs / 1000);
-
-            const days    = Math.floor(diffSec / 86400);
-            const hours   = Math.floor((diffSec % 86400) / 3600);
+            const days = Math.floor(diffSec / 86400);
+            const hours = Math.floor((diffSec % 86400) / 3600);
             const minutes = Math.floor((diffSec % 3600) / 60);
             const seconds = diffSec % 60;
-
-            document.getElementById('timer').textContent = 
+            document.getElementById('timer').textContent =
                 `${days} днів ${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
         }
-
-        // Оновлюємо таймер кожну секунду
         setInterval(updateTimer, 1000);
-        updateTimer(); // одразу показуємо
+        updateTimer();
 
         const NODES = 520;
         const MAX_DIST = 168;
@@ -156,7 +148,7 @@
                     edges.push({
                         a: i,
                         b: j,
-                        baseAlpha: 0.08 + (1 - d / MAX_DIST) * 0.42,
+                        baseAlpha: 0.07 + (1 - d / MAX_DIST) * 0.38,
                         length: d
                     });
                 }
@@ -165,17 +157,14 @@
 
         const centerA = { x: w * 0.28, y: h * 0.54 };
         const centerB = { x: w * 0.72, y: h * 0.46 };
-
         let startA = 0, distA = Infinity;
         let startB = 0, distB = Infinity;
-
         nodes.forEach((n, i) => {
             const da = Math.hypot(n.x - centerA.x, n.y - centerA.y);
             const db = Math.hypot(n.x - centerB.x, n.y - centerB.y);
             if (da < distA) { distA = da; startA = i; }
             if (db < distB) { distB = db; startB = i; }
         });
-
         nodes[startA].owner = 'A';
         nodes[startB].owner = 'B';
 
@@ -209,16 +198,16 @@
                 const wind = await windRes.json();
                 const lastWind = wind[wind.length-1] || {};
                 space.wind = parseFloat(lastWind[2]) || space.wind;
-                space.bz   = parseFloat(lastWind[3]) || space.bz;
+                space.bz = parseFloat(lastWind[3]) || space.bz;
 
                 space.dst = space.kp > 5 ? -50 - space.kp*12 : -10 - space.kp*4;
 
-                document.getElementById('kp').textContent     = space.kp.toFixed(1);
-                document.getElementById('flare').textContent  = space.flare;
+                document.getElementById('kp').textContent = space.kp.toFixed(1);
+                document.getElementById('flare').textContent = space.flare;
                 document.getElementById('proton').textContent = space.proton > 100 ? 'extreme' : space.proton > 30 ? 'high' : space.proton > 10 ? 'elevated' : 'low';
-                document.getElementById('wind').textContent   = Math.round(space.wind);
-                document.getElementById('bz').textContent     = space.bz.toFixed(1);
-                document.getElementById('dst').textContent    = Math.round(space.dst);
+                document.getElementById('wind').textContent = Math.round(space.wind);
+                document.getElementById('bz').textContent = space.bz.toFixed(1);
+                document.getElementById('dst').textContent = Math.round(space.dst);
             } catch(e) {
                 console.warn("Space weather fetch error", e);
             }
@@ -227,7 +216,7 @@
         function simulate() {
             const now = Date.now();
             nodes.forEach(n => {
-                n.breath = Math.sin(now * 0.00042 + n.phase) * 0.5 + 0.5;
+                n.breath = Math.sin(now * 0.00028 + n.phase) * 0.5 + 0.5;
             });
 
             nodes.forEach((n, i) => {
@@ -242,7 +231,7 @@
             nodes.forEach((n, i) => {
                 if (n.owner === 'B') {
                     const windFactor = (space.wind - 300) / 400;
-                    const bzFactor   = space.bz < 0 ? Math.abs(space.bz)/12 : 0;
+                    const bzFactor = space.bz < 0 ? Math.abs(space.bz)/12 : 0;
                     const prob = 0.018 * (0.6 + windFactor*1.1 + bzFactor*1.4);
                     if (Math.random() < prob) {
                         growFrom(i, 'B', 2.4 + windFactor*2.2 + bzFactor*2.8);
@@ -250,7 +239,7 @@
                 }
             });
 
-            const stormIntensity = 
+            const stormIntensity =
                 (space.kp / 9) * 0.4 +
                 (space.proton > 30 ? (space.proton-20)/200 : 0) +
                 (space.flare !== 'None' ? 0.35 : 0) +
@@ -278,7 +267,6 @@
         function growFrom(idx, civ, maxJump) {
             const origin = nodes[idx];
             const candidates = [];
-
             nodes.forEach((t, j) => {
                 if (t.owner) return;
                 const d = Math.hypot(t.x - origin.x, t.y - origin.y);
@@ -286,23 +274,20 @@
                     candidates.push({i: j, d});
                 }
             });
-
             if (!candidates.length) return;
-
             if (civ === 'B') {
                 candidates.sort((a,b) => a.d - b.d + (Math.random()-0.5)*140);
             } else {
                 candidates.sort((a,b) => a.d - b.d);
             }
-
             nodes[candidates[0].i].owner = civ;
         }
 
         function drawGrain() {
-            ctx.globalAlpha = 0.07;
-            ctx.fillStyle = '#111';
-            const grainSize = 2.2;
-            for (let i = 0; i < w * h / 9000; i++) {
+            ctx.globalAlpha = 0.05;
+            ctx.fillStyle = '#0a0a12';
+            const grainSize = 1.9;
+            for (let i = 0; i < w * h / 11000; i++) {
                 const x = Math.random() * w;
                 const y = Math.random() * h;
                 const s = Math.random() * grainSize;
@@ -312,40 +297,35 @@
         }
 
         function drawNebula() {
-            const t = Date.now() * 0.00008;
+            const t = Date.now() * 0.00006;
             ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.028;
-
+            ctx.globalAlpha = 0.022;
             const layers = [
-                { cx: w*0.36 + Math.sin(t*1.2)*110, cy: h*0.34 + Math.cos(t*0.95)*85, rIn:230, rOut:920, c1:'#2a003f', c2:'rgba(50,10,80,0.14)' },
-                { cx: w*0.66 + Math.cos(t*0.85)*140, cy: h*0.56 + Math.sin(t*1.4)*110, rIn:300, rOut:1180, c1:'#140028', c2:'rgba(35,0,70,0.11)' },
-                { cx: w*0.14 + Math.sin(t*0.7+3)*80,  cy: h*0.76 + Math.cos(t*0.75+2)*90, rIn:200, rOut:780, c1:'#0c001a', c2:'rgba(25,0,55,0.09)' }
+                { cx: w*0.33 + Math.sin(t*0.9)*90, cy: h*0.38 + Math.cos(t*1.1)*70, rIn:220, rOut:880, c1:'#18002e', c2:'rgba(40,0,90,0.11)' },
+                { cx: w*0.68 + Math.cos(t*1.05)*120, cy: h*0.59 + Math.sin(t*1.25)*95, rIn:280, rOut:1100, c1:'#0f0022', c2:'rgba(30,0,80,0.09)' },
+                { cx: w*0.18 + Math.sin(t*0.8+4)*70, cy: h*0.72 + Math.cos(t*0.9+3)*80, rIn:180, rOut:720, c1:'#080014', c2:'rgba(20,0,60,0.07)' }
             ];
-
             layers.forEach(l => {
                 let grd = ctx.createRadialGradient(l.cx, l.cy, l.rIn, l.cx, l.cy, l.rOut);
-                grd.addColorStop(0,   l.c1);
-                grd.addColorStop(0.45,l.c2);
-                grd.addColorStop(1,   'transparent');
+                grd.addColorStop(0, l.c1);
+                grd.addColorStop(0.48, l.c2);
+                grd.addColorStop(1, 'transparent');
                 ctx.fillStyle = grd;
                 ctx.fillRect(0,0,w,h);
             });
-
             ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = 1;
         }
 
         function draw() {
-            ctx.fillStyle = 'rgba(0,0,8,0.16)';
+            ctx.fillStyle = 'rgba(0,0,4,0.14)';
             ctx.fillRect(0,0,w,h);
-
             drawNebula();
             drawGrain();
 
-            const time = Date.now() * 0.00065;
+            const time = Date.now() * 0.00042;
 
             ctx.lineCap = 'round';
-
             edges.forEach(e => {
                 const n1 = nodes[e.a];
                 const n2 = nodes[e.b];
@@ -356,52 +336,50 @@
                 let col;
                 if (n1.owner === n2.owner && n1.owner) {
                     col = n1.owner === 'A'
-                        ? `hsla(262, 85%, 74%, ${e.baseAlpha * (0.38 + n1.breath*0.62) * alphaMult})`
-                        : `hsla(322, 90%, 68%, ${e.baseAlpha * (0.38 + n1.breath*0.62) * alphaMult})`;
+                        ? `hsla(200, 90%, 68%, ${e.baseAlpha * (0.42 + n1.breath*0.58) * alphaMult})`   // Order — cyan-blue
+                        : `hsla(340, 88%, 58%, ${e.baseAlpha * (0.42 + n1.breath*0.58) * alphaMult})`; // Flux — crimson-magenta
                 } else {
-                    const hue = (time*0.4 + n1.phase + n2.phase) * 50 + 275;
-                    col = `hsla(${hue % 360}, 75%, 62%, ${0.14 * alphaMult})`;
+                    const hue = (time*0.3 + (n1.phase + n2.phase) * 0.4) * 40 + 240;
+                    col = `hsla(${hue % 360}, 70%, 58%, ${0.12 * alphaMult})`;
                 }
 
-                const wave = Math.sin(time*2.4 + (n1.x+n2.x)*0.009) * 0.5 + 0.5;
-                const alpha = e.baseAlpha * (0.55 + wave*0.45) * alphaMult;
+                const wave = Math.sin(time*1.6 + (n1.x+n2.x)*0.007) * 0.5 + 0.5;
+                const alpha = e.baseAlpha * (0.62 + wave*0.38) * alphaMult;
 
                 ctx.globalAlpha = alpha;
                 ctx.strokeStyle = col;
-                ctx.lineWidth = 0.7 + (n1.breath + n2.breath) * 2.1;
+                ctx.lineWidth = 0.8 + (n1.breath + n2.breath) * 1.7;
 
-                const mx = (n1.x + n2.x)/2 + Math.sin(time*3.8 + n1.phase*1.3)*6;
-                const my = (n1.y + n2.y)/2 + Math.cos(time*4.1 + n2.phase*1.4)*6;
+                const mx = (n1.x + n2.x)/2 + Math.sin(time*2.8 + n1.phase*1.1)*4;
+                const my = (n1.y + n2.y)/2 + Math.cos(time*3.1 + n2.phase*1.2)*4;
 
                 ctx.beginPath();
                 ctx.moveTo(n1.x, n1.y);
                 ctx.quadraticCurveTo(mx, my, n2.x, n2.y);
                 ctx.stroke();
             });
-
             ctx.globalAlpha = 1;
 
             nodes.forEach(n => {
                 if (!n.owner) return;
 
-                const pulse = Math.sin(n.phase + Date.now()*0.0013) * 1.5 + 2.0;
-                const baseGlow = n.owner === 'A' ? 'rgba(190,150,255,0.72)' : 'rgba(255,120,210,0.78)';
-                const fillCol   = n.owner === 'A' ? '#d8ccff' : '#ffc0ea';
+                const pulse = Math.sin(n.phase + Date.now()*0.0009) * 1.2 + 1.8;
+                const baseGlow = n.owner === 'A' ? 'rgba(90,210,255,0.68)' : 'rgba(208,43,110,0.74)';
+                const fillCol = n.owner === 'A' ? '#a0e0ff' : '#ff6b9e';
+                const corruptionFade = 1 - n.corruption * 0.78;
 
-                const corruptionFade = 1 - n.corruption * 0.75;
-
-                ctx.shadowBlur = 22 + pulse * 7;
+                ctx.shadowBlur = 18 + pulse * 6;
                 ctx.shadowColor = baseGlow;
                 ctx.fillStyle = fillCol;
-                ctx.globalAlpha = corruptionFade * 0.92;
+                ctx.globalAlpha = corruptionFade * 0.90;
                 ctx.beginPath();
-                ctx.arc(n.x, n.y, pulse * 0.95, 0, Math.PI*2);
+                ctx.arc(n.x, n.y, pulse * 0.92, 0, Math.PI*2);
                 ctx.fill();
 
-                ctx.shadowBlur = 32;
-                ctx.fillStyle = n.owner === 'A' ? 'rgba(190,150,255,0.16)' : 'rgba(255,120,210,0.19)';
+                ctx.shadowBlur = 28;
+                ctx.fillStyle = n.owner === 'A' ? 'rgba(90,210,255,0.14)' : 'rgba(208,43,110,0.17)';
                 ctx.beginPath();
-                ctx.arc(n.x, n.y, pulse * 2.4, 0, Math.PI*2);
+                ctx.arc(n.x, n.y, pulse * 2.2, 0, Math.PI*2);
                 ctx.fill();
 
                 ctx.shadowBlur = 0;
