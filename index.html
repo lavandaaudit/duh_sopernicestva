@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBONARIUM — Жива Павутина</title>
+    <style>
+        body {
+            margin: 0;
+            background: radial-gradient(ellipse at center, #0a0015 0%, #000 70%);
+            color: #e0d8ff;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+        }
+        canvas { 
+            display: block; 
+            mix-blend-mode: screen;
+        }
+        #ui {
+            position: absolute;
+            top: 18px;
+            left: 20px;
+            pointer-events: none;
+            font-size: 0.95em;
+            line-height: 1.5;
+            text-shadow: 0 0 10px #200040, 0 0 20px #400080;
+            letter-spacing: 0.4px;
+        }
+        #bottom {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            font-size: 1.1em;
+            padding: 8px 24px;
+            border-radius: 30px;
+            background: rgba(10,0,30,0.65);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(120,80,220,0.25);
+            text-shadow: 0 0 8px #000;
+        }
+        .civ-a { color: #a78bff; text-shadow: 0 0 10px #a78bff; }
+        .civ-b { color: #ff6ac2; text-shadow: 0 0 10px #ff6ac2; }
+        h1 { 
+            margin: 0 0 8px; 
+            font-size: 1.7em; 
+            background: linear-gradient(90deg, #c4a8ff, #ff8ad8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+    <div id="ui">
+        <h1>🌌 IBONARIUM</h1>
+        <div>Kp: <span id="kp">2.3</span></div>
+        <div>Flares: <span id="flare">None</span></div>
+        <div>Protons: <span id="proton">low</span></div>
+    </div>
+    <div id="bottom">
+        <span class="civ-a">Order:</span> <span id="pct-a">0%</span>  |
+        <span class="civ-b">Flux:</span> <span id="pct-b">0%</span>  |
+        Ниток: <span id="edges">0</span>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let w, h;
+
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const NODES = 480;
+        const MAX_DIST = 160;
+        const nodes = [];
+        const edges = [];
+
+        class Node {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.owner = null;
+                this.strength = 1;
+                this.phase = Math.random() * Math.PI * 2;
+                this.breath = 0;
+            }
+        }
+
+        for (let i = 0; i < NODES; i++) {
+            let x = Math.random() * w * 1.6 - w * 0.3;
+            let y = Math.random() * h * 1.6 - h * 0.3;
+            nodes.push(new Node(x, y));
+        }
+
+        for (let i = 0; i < NODES; i++) {
+            for (let j = i + 1; j < NODES; j++) {
+                const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+                if (d < MAX_DIST) {
+                    edges.push({ a: i, b: j, baseAlpha: 0.1 + (1 - d / MAX_DIST) * 0.4 });
+                }
+            }
+        }
+
+        const centerA = { x: w * 0.3, y: h * 0.52 };
+        const centerB = { x: w * 0.7, y: h * 0.48 };
+        let startA = 0, distA = Infinity;
+        let startB = 0, distB = Infinity;
+
+        nodes.forEach((n, i) => {
+            const da = Math.hypot(n.x - centerA.x, n.y - centerA.y);
+            const db = Math.hypot(n.x - centerB.x, n.y - centerB.y);
+            if (da < distA) { distA = da; startA = i; }
+            if (db < distB) { distB = db; startB = i; }
+        });
+
+        nodes[startA].owner = 'A';
+        nodes[startB].owner = 'B';
+
+        let space = { kp: 2.3, flare: 'None', proton: 12, wind: 380 };
+
+        function updateSpace() {
+            space.kp    = Math.max(0, Math.min(8.7, space.kp + (Math.random()-0.5)*0.4));
+            space.proton = Math.max(0, space.proton + (Math.random()-0.5)*20);
+            space.wind  = 300 + Math.random()*450;
+
+            if (Math.random() < 0.03) space.flare = Math.random() < 0.5 ? 'X' : 'M';
+            if (Math.random() < 0.09) space.flare = 'None';
+
+            document.getElementById('kp').textContent     = space.kp.toFixed(1);
+            document.getElementById('flare').textContent  = space.flare;
+            document.getElementById('proton').textContent = space.proton > 50 ? 'extreme' : space.proton > 30 ? 'high' : 'low';
+        }
+
+        function simulate() {
+            nodes.forEach(n => {
+                n.breath = Math.sin(Date.now() * 0.0003 + n.phase) * 0.5 + 0.5;
+            });
+
+            // Order — повільне, стабільне
+            nodes.forEach((n, i) => {
+                if (n.owner === 'A' && Math.random() < 0.0065 * (1 - space.kp/10)) {
+                    growFrom(i, 'A', 1.25);
+                }
+            });
+
+            // Flux — швидше, хаотичніше
+            nodes.forEach((n, i) => {
+                if (n.owner === 'B' && Math.random() < 0.021 * (space.wind/450 + 0.4)) {
+                    growFrom(i, 'B', 2.9 + Math.random()*1.6);
+                }
+            });
+
+            // Деградація
+            if (space.proton > 35 || space.flare !== 'None') {
+                nodes.forEach(n => {
+                    if (n.owner && Math.random() < 0.0045 + space.proton*0.0009) {
+                        if (Math.random() < 0.38) n.owner = null;
+                        n.strength *= 0.91;
+                    }
+                });
+            }
+        }
+
+        function growFrom(idx, civ, maxJump) {
+            const origin = nodes[idx];
+            const candidates = [];
+            nodes.forEach((t, j) => {
+                if (t.owner) return;
+                const d = Math.hypot(t.x - origin.x, t.y - origin.y);
+                if (d < MAX_DIST * maxJump) candidates.push({i:j, d});
+            });
+            if (!candidates.length) return;
+
+            if (civ === 'B') candidates.sort((a,b) => a.d - b.d + (Math.random()-0.5)*100);
+            else             candidates.sort((a,b) => a.d - b.d);
+
+            nodes[candidates[0].i].owner = civ;
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0,0,8,0.14)';
+            ctx.fillRect(0,0,w,h);
+
+            const time = Date.now() * 0.0006;
+
+            // Нитки — хвилясті, пульсуючі
+            ctx.lineCap = 'round';
+            edges.forEach(e => {
+                const n1 = nodes[e.a];
+                const n2 = nodes[e.b];
+                if (!n1.owner && !n2.owner) return;
+
+                let hueShift = (time + n1.phase + n2.phase) * 0.3;
+                let col;
+                if (n1.owner === n2.owner) {
+                    col = n1.owner === 'A'
+                        ? `hsla(260, 80%, 70%, ${e.baseAlpha * (0.4 + n1.breath*0.6)})`
+                        : `hsla(320, 85%, 65%, ${e.baseAlpha * (0.4 + n1.breath*0.6)})`;
+                } else {
+                    col = `hsla(${hueShift*40 + 280}, 70%, 60%, 0.18)`;
+                }
+
+                const wave = Math.sin(time * 2 + (n1.x + n2.x) * 0.008) * 0.5 + 0.5;
+                const alpha = e.baseAlpha * (0.6 + wave * 0.4) * (n1.strength + n2.strength)/2;
+
+                ctx.strokeStyle = col;
+                ctx.globalAlpha = alpha;
+                ctx.lineWidth = 0.6 + (n1.breath + n2.breath) * 1.8;
+
+                const mx = (n1.x + n2.x) / 2 + Math.sin(time * 3 + n1.phase) * 4;
+                const my = (n1.y + n2.y) / 2 + Math.cos(time * 3.2 + n2.phase) * 4;
+
+                ctx.beginPath();
+                ctx.moveTo(n1.x, n1.y);
+                ctx.quadraticCurveTo(mx, my, n2.x, n2.y);
+                ctx.stroke();
+            });
+            ctx.globalAlpha = 1;
+
+            // Вузли
+            nodes.forEach(n => {
+                if (!n.owner) return;
+
+                const pulse = Math.sin(n.phase + Date.now() * 0.0012) * 1.4 + 1.8;
+                const glow = n.owner === 'A'
+                    ? 'rgba(180,140,255,0.7)'
+                    : 'rgba(255,110,200,0.75)';
+
+                ctx.shadowBlur = 18 + pulse * 6;
+                ctx.shadowColor = glow;
+
+                ctx.fillStyle = n.owner === 'A' ? '#d0c0ff' : '#ffb0e8';
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, pulse * 0.9, 0, Math.PI*2);
+                ctx.fill();
+
+                // легкий слід
+                ctx.shadowBlur = 25;
+                ctx.fillStyle = n.owner === 'A' ? 'rgba(180,140,255,0.15)' : 'rgba(255,110,200,0.18)';
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, pulse * 2.2, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+            });
+
+            // Статистика
+            let ca = 0, cb = 0;
+            nodes.forEach(n => { if(n.owner==='A') ca++; if(n.owner==='B') cb++; });
+            const tot = ca + cb;
+            document.getElementById('pct-a').textContent = tot ? (ca/tot*100).toFixed(1)+' %' : '0%';
+            document.getElementById('pct-b').textContent = tot ? (cb/tot*100).toFixed(1)+' %' : '0%';
+        }
+
+        function loop() {
+            simulate();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        setInterval(updateSpace, 14000);
+        updateSpace();
+        loop();
+    </script>
+</body>
+</html>
