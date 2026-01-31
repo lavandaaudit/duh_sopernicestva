@@ -1,88 +1,146 @@
-ʼ<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IBONARIUM — Жива Павутина</title>
+    <title>IBONARIUM — Deep Ethereal</title>
     <style>
         body {
             margin: 0;
-            background: radial-gradient(ellipse at center, #0a0015 0%, #000002 68%, #000 100%);
-            color: #d0c8ff;
+            background: radial-gradient(circle at center, #0b001a 0%, #000000 100%);
+            color: #e0d8ff;
             font-family: 'Segoe UI', system-ui, sans-serif;
             overflow: hidden;
         }
+
         canvas {
             display: block;
             mix-blend-mode: screen;
         }
+
         #ui {
             position: absolute;
-            top: 14px;
-            left: 16px;
+            top: 20px;
+            left: 20px;
             pointer-events: none;
-            font-size: 0.82em;
-            line-height: 1.38;
-            text-shadow: 0 0 9px #1a0033, 0 0 18px #330066;
-            letter-spacing: 0.3px;
-            opacity: 0.92;
+            font-size: 0.85em;
+            line-height: 1.5;
+            text-shadow: 0 0 10px #2a0044, 0 0 20px #550088;
+            letter-spacing: 0.5px;
+            opacity: 0.95;
             user-select: none;
+            z-index: 10;
+            max-width: 260px;
         }
+
         #ui h1 {
-            margin: 0 0 6px 0;
-            font-size: 1.24em;
-            background: linear-gradient(90deg, #7dd3ff, #a78dff, #ff78d2);
+            margin: 0 0 10px 0;
+            font-size: 1.4em;
+            background: linear-gradient(90deg, #8fe0ff, #cba6ff, #ff94d4);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            font-weight: 300;
         }
-        .civ-a { color: #5ac8ff; text-shadow: 0 0 10px #5ac8ff; }
-        .civ-b { color: #d02b6e; text-shadow: 0 0 12px #d02b6e; }
-        .stats, .space-info {
-            margin-top: 4px;
+
+        .civ-a {
+            color: #80dfff;
+            text-shadow: 0 0 12px #00aaff;
+            font-weight: bold;
+        }
+
+        .civ-b {
+            color: #ff80b3;
+            text-shadow: 0 0 12px #ff0066;
+            font-weight: bold;
+        }
+
+        .stats,
+        .space-info,
+        .legend {
+            margin-top: 8px;
+            background: rgba(5, 2, 12, 0.6);
+            /* Darker panel */
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 2px solid rgba(100, 100, 255, 0.15);
+            backdrop-filter: blur(4px);
+        }
+
+        .label {
+            opacity: 0.6;
+            font-size: 0.9em;
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        .val {
+            font-family: monospace;
+            font-size: 1.1em;
+            color: #fff;
             opacity: 0.9;
         }
-        .space-info div, .stats div {
-            margin: 2px 0;
-        }
-        .label {
-            opacity: 0.75;
-            font-size: 0.92em;
-        }
-        .launch-info {
-            margin-top: 8px;
-            font-size: 0.74em;
-            opacity: 0.70;
-            line-height: 1.4;
-        }
+
         .timer {
             font-family: monospace;
-            letter-spacing: 0.8px;
-            color: #c0b0ff;
+            color: #b0a0ff;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .legend h3 {
+            margin: 0 0 5px 0;
+            font-size: 0.95em;
+            color: #fff;
+            opacity: 0.8;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 2px;
+        }
+
+        .legend-item {
+            font-size: 0.8em;
+            margin-bottom: 3px;
+            color: #aaa;
+        }
+
+        .legend-key {
+            color: #8fe0ff;
+            font-weight: bold;
         }
     </style>
 </head>
+
 <body>
     <canvas id="c"></canvas>
     <div id="ui">
-        <h1>🌌 IBONARIUM</h1>
-       
+        <h1>🌌 IBONARIUM <span style="font-size:0.6em; opacity:0.6;">DEEP</span></h1>
+
         <div class="space-info">
-            <div><span class="label">Kp:</span> <span id="kp">2.3</span></div>
-            <div><span class="label">Flares:</span> <span id="flare">None</span></div>
-            <div><span class="label">Protons ≥10 MeV:</span> <span id="proton">low</span></div>
-            <div><span class="label">Solar Wind:</span> <span id="wind">380</span> km/s</div>
-            <div><span class="label">Bz:</span> <span id="bz">+1.2</span> nT</div>
-            <div><span class="label">Dst:</span> <span id="dst">-18</span> nT</div>
+            <div><span class="label">Kp Index:</span> <span id="kp" class="val">--</span></div>
+            <div><span class="label">Solar Wind:</span> <span id="wind" class="val">--</span> km/s</div>
+            <div><span class="label">Protons:</span> <span id="proton" class="val">--</span></div>
+            <div><span class="label">Bz Field:</span> <span id="bz" class="val">--</span> nT</div>
+            <div><span class="label">Flares:</span> <span id="flare" class="val">None</span></div>
         </div>
+
         <div class="stats">
-            <span class="civ-a">Order</span> <span id="pct-a">0.0%</span>  |
+            <span class="civ-a">Order</span> <span id="pct-a">0.0%</span> &nbsp;|&nbsp;
             <span class="civ-b">Flux</span> <span id="pct-b">0.0%</span><br>
-            Активних зв’язків: <span id="edges">0</span>
-            <div class="launch-info">
-                Запущено: <span id="launch-date">сьогодні о 00:00</span><br>
-                Час роботи: <span id="timer" class="timer">0 днів 00:00:00</span>
+            <div style="margin-top:4px; font-size:0.9em; opacity:0.8;">
+                Зв’язків: <span id="edges">0</span>
             </div>
+            <div class="timer" id="timer">00:00:00</div>
+        </div>
+
+        <div class="legend">
+            <h3>СИСТЕМНИЙ ПРОТОКОЛ</h3>
+            <div class="legend-item"><span class="legend-key">Kp Index:</span> Хаос та тремтіння вузлів.</div>
+            <div class="legend-item"><span class="legend-key">Solar Wind:</span> Швидкість дрейфу матерії.</div>
+            <div class="legend-item"><span class="legend-key">Bz Field:</span> Колір туманності (+/-).</div>
+            <div class="legend-item"><span class="legend-key">Flares:</span> Інтенсивність пульсації.</div>
+            <div class="legend-item"><span class="legend-key">Electrons:</span> Іскри на лініях.</div>
         </div>
     </div>
 
@@ -97,306 +155,251 @@
         window.addEventListener('resize', resize);
         resize();
 
-        const launchDate = new Date();
-        launchDate.setHours(0, 0, 0, 0);
-       
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        document.getElementById('launch-date').textContent =
-            launchDate.toLocaleDateString('uk-UA', options) + ' о 00:00';
+        // --- TIMING ---
+        const startT = new Date();
+        startT.setHours(0, 0, 0, 0);
+        setInterval(() => {
+            const s = Math.floor((new Date() - startT) / 1000);
+            const d = Math.floor(s / 86400);
+            const hh = Math.floor((s % 86400) / 3600).toString().padStart(2, '0');
+            const mm = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+            const ss = (s % 60).toString().padStart(2, '0');
+            document.getElementById('timer').textContent = `${d}д ${hh}:${mm}:${ss}`;
+        }, 1000);
 
-        function updateTimer() {
-            const now = new Date();
-            const diffMs = now - launchDate;
-            const diffSec = Math.floor(diffMs / 1000);
-            const days = Math.floor(diffSec / 86400);
-            const hours = Math.floor((diffSec % 86400) / 3600);
-            const minutes = Math.floor((diffSec % 3600) / 60);
-            const seconds = diffSec % 60;
-            document.getElementById('timer').textContent =
-                `${days} днів ${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
-        }
-        setInterval(updateTimer, 1000);
-        updateTimer();
-
-        const NODES = 520;
-        const MAX_DIST = 168;
+        // --- CONFIG ---
+        const NODES = 580;
+        const MAX_DIST = 190;
         const nodes = [];
-        const edges = [];
 
         class Node {
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
+                this.vx = (Math.random() - 0.5) * 0.15;
+                this.vy = (Math.random() - 0.5) * 0.15;
                 this.owner = null;
-                this.strength = 1.0;
                 this.phase = Math.random() * Math.PI * 2;
                 this.breath = 0;
-                this.corruption = 0;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                const pad = 60;
+                if (this.x < -pad) this.x = w + pad;
+                if (this.x > w + pad) this.x = -pad;
+                if (this.y < -pad) this.y = h + pad;
+                if (this.y > h + pad) this.y = -pad;
             }
         }
 
         for (let i = 0; i < NODES; i++) {
-            let x = Math.random() * w * 1.7 - w * 0.35;
-            let y = Math.random() * h * 1.7 - h * 0.35;
+            let x = Math.random() * w * 1.2 - w * 0.1;
+            let y = Math.random() * h * 1.2 - h * 0.1;
             nodes.push(new Node(x, y));
-        }
-
-        for (let i = 0; i < NODES; i++) {
-            for (let j = i + 1; j < NODES; j++) {
-                const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
-                if (d < MAX_DIST) {
-                    edges.push({
-                        a: i,
-                        b: j,
-                        baseAlpha: 0.07 + (1 - d / MAX_DIST) * 0.38,
-                        length: d
-                    });
-                }
-            }
         }
 
         const centerA = { x: w * 0.28, y: h * 0.54 };
         const centerB = { x: w * 0.72, y: h * 0.46 };
-        let startA = 0, distA = Infinity;
-        let startB = 0, distB = Infinity;
-        nodes.forEach((n, i) => {
-            const da = Math.hypot(n.x - centerA.x, n.y - centerA.y);
-            const db = Math.hypot(n.x - centerB.x, n.y - centerB.y);
-            if (da < distA) { distA = da; startA = i; }
-            if (db < distB) { distB = db; startB = i; }
+        nodes.forEach(n => {
+            if (Math.hypot(n.x - centerA.x, n.y - centerA.y) < 100) n.owner = 'A';
+            if (Math.hypot(n.x - centerB.x, n.y - centerB.y) < 100) n.owner = 'B';
         });
-        nodes[startA].owner = 'A';
-        nodes[startB].owner = 'B';
 
+        // --- API DATA ---
         let space = {
-            kp: 2.3,
-            flare: 'None',
-            proton: 8,
-            wind: 380,
-            bz: 1.2,
-            dst: -18
+            kp: 2.3, flare: 'None', proton: 5, wind: 380, bz: 1.2, electrons: 500
         };
 
         async function updateSpace() {
             try {
-                const kpRes = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
-                const kpData = await kpRes.json();
-                space.kp = parseFloat(kpData[kpData.length-1][1]) || space.kp;
+                const f = async (u) => { try { const r = await fetch(u); return await r.json(); } catch { return null; } };
 
-                const flareRes = await fetch('https://services.swpc.noaa.gov/json/goes/primary/xray-flares-latest.json');
-                const flares = await flareRes.json();
-                const last = flares[flares.length-1] || {};
-                const cls = last.current_class || last.max_class || 'None';
-                space.flare = (cls.startsWith('M') || cls.startsWith('X')) ? cls[0] : 'None';
+                const [kp, fl, pro, pla, mag, elec] = await Promise.all([
+                    f('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
+                    f('https://services.swpc.noaa.gov/json/goes/primary/xray-flares-latest.json'),
+                    f('https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json'),
+                    f('https://services.swpc.noaa.gov/products/solar-wind/plasma-1-minute.json'),
+                    f('https://services.swpc.noaa.gov/products/solar-wind/mag-1-minute.json'),
+                    f('https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json')
+                ]);
 
-                const protonRes = await fetch('https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json');
-                const protons = await protonRes.json();
-                const p = protons.filter(p => p.energy === '>=10 MeV').pop();
-                space.proton = p ? p.flux : space.proton;
-
-                const windRes = await fetch('https://services.swpc.noaa.gov/products/solar-wind/plasma-1-minute.json');
-                const wind = await windRes.json();
-                const lastWind = wind[wind.length-1] || {};
-                space.wind = parseFloat(lastWind[2]) || space.wind;
-                space.bz = parseFloat(lastWind[3]) || space.bz;
-
-                space.dst = space.kp > 5 ? -50 - space.kp*12 : -10 - space.kp*4;
+                if (kp && kp.length) space.kp = parseFloat(kp[kp.length - 1][1]) || 2;
+                if (fl && fl.length) space.flare = fl[fl.length - 1].current_class || 'A';
+                if (pro) {
+                    const p = pro.find(x => x.energy === '>=10 MeV');
+                    if (p) space.proton = parseFloat(p.flux);
+                }
+                if (pla && pla.length) space.wind = parseFloat(pla[pla.length - 1][2]) || 380;
+                if (mag && mag.length) space.bz = parseFloat(mag[mag.length - 1][3]) || 0;
+                if (elec && elec.length) space.electrons = parseFloat(elec[elec.length - 1].flux);
 
                 document.getElementById('kp').textContent = space.kp.toFixed(1);
-                document.getElementById('flare').textContent = space.flare;
-                document.getElementById('proton').textContent = space.proton > 100 ? 'extreme' : space.proton > 30 ? 'high' : space.proton > 10 ? 'elevated' : 'low';
                 document.getElementById('wind').textContent = Math.round(space.wind);
+                document.getElementById('flare').textContent = space.flare;
+                document.getElementById('proton').textContent = space.proton.toFixed(1);
                 document.getElementById('bz').textContent = space.bz.toFixed(1);
-                document.getElementById('dst').textContent = Math.round(space.dst);
-            } catch(e) {
-                console.warn("Space weather fetch error", e);
-            }
+            } catch (e) { console.warn('API fetch fail', e); }
         }
 
+        // --- LOGIC ---
         function simulate() {
             const now = Date.now();
+            const driftX = (space.wind - 300) * 0.00002;
+
             nodes.forEach(n => {
-                n.breath = Math.sin(now * 0.00028 + n.phase) * 0.5 + 0.5;
+                n.vx += driftX * 0.1;
+                n.vx += (Math.random() - 0.5) * space.kp * 0.001;
+                n.vy += (Math.random() - 0.5) * space.kp * 0.001;
+                n.vx = Math.max(-0.5, Math.min(0.5, n.vx * 0.99));
+                n.update();
+
+                // Deep breathing cycle
+                n.breath = Math.sin(now * 0.0012 + n.phase) * 0.5 + 0.5;
             });
 
+            // Growth
             nodes.forEach((n, i) => {
-                if (n.owner === 'A') {
-                    const prob = 0.0058 * (1 - space.kp/9) * (1 + space.bz/20);
-                    if (Math.random() < prob) {
-                        growFrom(i, 'A', 1.1 + (space.bz > 0 ? 0.6 : 0));
-                    }
-                }
+                let biasA = space.bz > 0 ? 1.2 : 0.8;
+                let biasB = space.bz < 0 ? 1.2 : 0.8;
+                if (n.owner === 'A' && Math.random() < 0.005 * biasA) growFrom(i, 'A', 1.1);
+                if (n.owner === 'B' && Math.random() < 0.005 * biasB) growFrom(i, 'B', 1.3);
             });
-
-            nodes.forEach((n, i) => {
-                if (n.owner === 'B') {
-                    const windFactor = (space.wind - 300) / 400;
-                    const bzFactor = space.bz < 0 ? Math.abs(space.bz)/12 : 0;
-                    const prob = 0.018 * (0.6 + windFactor*1.1 + bzFactor*1.4);
-                    if (Math.random() < prob) {
-                        growFrom(i, 'B', 2.4 + windFactor*2.2 + bzFactor*2.8);
-                    }
-                }
-            });
-
-            const stormIntensity =
-                (space.kp / 9) * 0.4 +
-                (space.proton > 30 ? (space.proton-20)/200 : 0) +
-                (space.flare !== 'None' ? 0.35 : 0) +
-                (space.bz < -8 ? 0.45 : 0);
-
-            if (stormIntensity > 0.15) {
-                nodes.forEach(n => {
-                    if (n.owner) {
-                        if (Math.random() < 0.008 + stormIntensity * 0.09) {
-                            if (Math.random() < 0.45) n.owner = null;
-                            n.strength *= 0.88;
-                            n.corruption = Math.min(1, n.corruption + 0.12 + stormIntensity*0.3);
-                        }
-                    }
-                });
-            }
-
-            if (stormIntensity < 0.1) {
-                nodes.forEach(n => {
-                    if (n.corruption > 0) n.corruption -= 0.003;
-                });
-            }
         }
 
-        function growFrom(idx, civ, maxJump) {
+        function growFrom(idx, civ, rangeMod) {
             const origin = nodes[idx];
-            const candidates = [];
-            nodes.forEach((t, j) => {
-                if (t.owner) return;
+            let bestT = -1, bestD = 9999;
+            for (let k = 0; k < 20; k++) {
+                const rid = Math.floor(Math.random() * NODES);
+                const t = nodes[rid];
+                if (t.owner) continue;
                 const d = Math.hypot(t.x - origin.x, t.y - origin.y);
-                if (d < MAX_DIST * maxJump) {
-                    candidates.push({i: j, d});
+                if (d < MAX_DIST * rangeMod && d < bestD) {
+                    bestD = d; bestT = rid;
                 }
-            });
-            if (!candidates.length) return;
-            if (civ === 'B') {
-                candidates.sort((a,b) => a.d - b.d + (Math.random()-0.5)*140);
-            } else {
-                candidates.sort((a,b) => a.d - b.d);
             }
-            nodes[candidates[0].i].owner = civ;
+            if (bestT !== -1) nodes[bestT].owner = civ;
         }
 
-        function drawGrain() {
-            ctx.globalAlpha = 0.05;
-            ctx.fillStyle = '#0a0a12';
-            const grainSize = 1.9;
-            for (let i = 0; i < w * h / 11000; i++) {
-                const x = Math.random() * w;
-                const y = Math.random() * h;
-                const s = Math.random() * grainSize;
-                ctx.fillRect(x, y, s, s);
-            }
-            ctx.globalAlpha = 1;
-        }
-
+        // --- RENDER ---
         function drawNebula() {
-            const t = Date.now() * 0.00006;
+            const t = Date.now() * 0.0002;
             ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.022;
-            const layers = [
-                { cx: w*0.33 + Math.sin(t*0.9)*90, cy: h*0.38 + Math.cos(t*1.1)*70, rIn:220, rOut:880, c1:'#18002e', c2:'rgba(40,0,90,0.11)' },
-                { cx: w*0.68 + Math.cos(t*1.05)*120, cy: h*0.59 + Math.sin(t*1.25)*95, rIn:280, rOut:1100, c1:'#0f0022', c2:'rgba(30,0,80,0.09)' },
-                { cx: w*0.18 + Math.sin(t*0.8+4)*70, cy: h*0.72 + Math.cos(t*0.9+3)*80, rIn:180, rOut:720, c1:'#080014', c2:'rgba(20,0,60,0.07)' }
+            // Darker, subtler nebula for depth
+            const bzShift = space.bz * 3;
+            const clouds = [
+                { x: w * 0.3 + Math.sin(t) * 50, y: h * 0.4, r: 600, c: [15, 0, 40 + bzShift] },
+                { x: w * 0.7 + Math.cos(t) * 60, y: h * 0.6, r: 700, c: [5 - bzShift, 0, 30] }
             ];
-            layers.forEach(l => {
-                let grd = ctx.createRadialGradient(l.cx, l.cy, l.rIn, l.cx, l.cy, l.rOut);
-                grd.addColorStop(0, l.c1);
-                grd.addColorStop(0.48, l.c2);
-                grd.addColorStop(1, 'transparent');
-                ctx.fillStyle = grd;
-                ctx.fillRect(0,0,w,h);
+            clouds.forEach(c => {
+                const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+                g.addColorStop(0, `rgba(${c.c[0]}, ${c.c[1]}, ${c.c[2]}, 0.15)`);
+                g.addColorStop(1, 'transparent');
+                ctx.fillStyle = g;
+                ctx.fillRect(0, 0, w, h);
             });
             ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
         }
 
         function draw() {
-            ctx.fillStyle = 'rgba(0,0,4,0.14)';
-            ctx.fillRect(0,0,w,h);
+            // Dark background clearing for trails
+            ctx.fillStyle = 'rgba(0, 0, 5, 0.2)';
+            ctx.fillRect(0, 0, w, h);
             drawNebula();
-            drawGrain();
 
-            const time = Date.now() * 0.00042;
+            const time = Date.now();
+            let edgeCount = 0;
+            let ca = 0, cb = 0;
+
+            const active = nodes.filter(n => n.owner);
+            active.forEach(n => { if (n.owner === 'A') ca++; else cb++; });
+
+            const limit = Math.min(active.length, 380);
+            const sparkChance = space.electrons / 200000;
 
             ctx.lineCap = 'round';
-            edges.forEach(e => {
-                const n1 = nodes[e.a];
-                const n2 = nodes[e.b];
-                if (!n1.owner && !n2.owner) return;
+            for (let i = 0; i < limit; i++) {
+                const n1 = active[i];
+                for (let j = i + 1; j < limit; j++) {
+                    const n2 = active[j];
+                    const dx = n1.x - n2.x; const dy = n1.y - n2.y;
+                    if (Math.abs(dx) > MAX_DIST || Math.abs(dy) > MAX_DIST) continue;
 
-                let alphaMult = (n1.strength + n2.strength) / 2 * (1 - (n1.corruption + n2.corruption)/2);
+                    const d = Math.hypot(dx, dy);
+                    if (d < MAX_DIST) {
+                        // Squared falloff for DEPTH (faint far lines)
+                        const normD = d / MAX_DIST;
+                        const alpha = (1 - normD) * (1 - normD);
 
-                let col;
-                if (n1.owner === n2.owner && n1.owner) {
-                    col = n1.owner === 'A'
-                        ? `hsla(200, 90%, 68%, ${e.baseAlpha * (0.42 + n1.breath*0.58) * alphaMult})`   // Order — cyan-blue
-                        : `hsla(340, 88%, 58%, ${e.baseAlpha * (0.42 + n1.breath*0.58) * alphaMult})`; // Flux — crimson-magenta
-                } else {
-                    const hue = (time*0.3 + (n1.phase + n2.phase) * 0.4) * 40 + 240;
-                    col = `hsla(${hue % 360}, 70%, 58%, ${0.12 * alphaMult})`;
+                        if (Math.random() < sparkChance) {
+                            ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+                            ctx.lineWidth = 1.5;
+                        } else if (n1.owner === n2.owner) {
+                            const isA = n1.owner === 'A';
+                            // Iridescence: Time + Position based hue shift
+                            const baseHue = isA ? 190 : 320;
+                            const irid = Math.sin(time * 0.002 + (n1.x + n1.y) * 0.005) * 20;
+
+                            // Breath sync
+                            const breathMix = (n1.breath + n2.breath) * 0.5;
+
+                            // Muted opacity (0.25) so nodes pop
+                            const op = alpha * 0.25 * (0.6 + breathMix * 0.4);
+                            const width = 0.5 + breathMix * 1.5; // Pulse width
+
+                            ctx.strokeStyle = `hsla(${baseHue + irid}, 80%, 65%, ${op})`;
+                            ctx.lineWidth = width;
+                        } else {
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.05})`;
+                            ctx.lineWidth = 0.5;
+                        }
+
+                        // Curved flow
+                        const midX = (n1.x + n2.x) / 2 + Math.sin(time * 0.0015 + d * 0.02) * 8;
+                        const midY = (n1.y + n2.y) / 2 + Math.cos(time * 0.0015 + d * 0.02) * 8;
+                        ctx.beginPath(); ctx.moveTo(n1.x, n1.y); ctx.quadraticCurveTo(midX, midY, n2.x, n2.y); ctx.stroke();
+                        edgeCount++;
+                    }
                 }
+            }
 
-                const wave = Math.sin(time*1.6 + (n1.x+n2.x)*0.007) * 0.5 + 0.5;
-                const alpha = e.baseAlpha * (0.62 + wave*0.38) * alphaMult;
+            // NODES - Enhanced Glow
+            active.forEach(n => {
+                const isA = n.owner === 'A';
+                const baseCol = isA ? '#50c0ff' : '#ff5090'; // More vivid core
 
-                ctx.globalAlpha = alpha;
-                ctx.strokeStyle = col;
-                ctx.lineWidth = 0.8 + (n1.breath + n2.breath) * 1.7;
+                // Breath calculation
+                const b = n.breath;
 
-                const mx = (n1.x + n2.x)/2 + Math.sin(time*2.8 + n1.phase*1.1)*4;
-                const my = (n1.y + n2.y)/2 + Math.cos(time*3.1 + n2.phase*1.2)*4;
+                // Flare boost
+                let boost = 1;
+                if (space.flare.startsWith('M')) boost = 1.5;
 
-                ctx.beginPath();
-                ctx.moveTo(n1.x, n1.y);
-                ctx.quadraticCurveTo(mx, my, n2.x, n2.y);
-                ctx.stroke();
-            });
-            ctx.globalAlpha = 1;
+                ctx.globalCompositeOperation = 'screen';
 
-            nodes.forEach(n => {
-                if (!n.owner) return;
+                // Outer diffuse glow (Deep)
+                ctx.shadowBlur = 30 * boost;
+                ctx.shadowColor = baseCol;
+                ctx.fillStyle = baseCol;
+                ctx.globalAlpha = 0.3 * b;
+                ctx.beginPath(); ctx.arc(n.x, n.y, (4 + b * 6) * boost, 0, 6.28); ctx.fill();
 
-                const pulse = Math.sin(n.phase + Date.now()*0.0009) * 1.2 + 1.8;
-                const baseGlow = n.owner === 'A' ? 'rgba(90,210,255,0.68)' : 'rgba(208,43,110,0.74)';
-                const fillCol = n.owner === 'A' ? '#a0e0ff' : '#ff6b9e';
-                const corruptionFade = 1 - n.corruption * 0.78;
-
-                ctx.shadowBlur = 18 + pulse * 6;
-                ctx.shadowColor = baseGlow;
-                ctx.fillStyle = fillCol;
-                ctx.globalAlpha = corruptionFade * 0.90;
-                ctx.beginPath();
-                ctx.arc(n.x, n.y, pulse * 0.92, 0, Math.PI*2);
-                ctx.fill();
-
-                ctx.shadowBlur = 28;
-                ctx.fillStyle = n.owner === 'A' ? 'rgba(90,210,255,0.14)' : 'rgba(208,43,110,0.17)';
-                ctx.beginPath();
-                ctx.arc(n.x, n.y, pulse * 2.2, 0, Math.PI*2);
-                ctx.fill();
+                // Inner bright core
+                ctx.shadowBlur = 10 * boost;
+                ctx.globalAlpha = 0.8 + b * 0.2;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(n.x, n.y, 1.5 * boost, 0, 6.28); ctx.fill();
 
                 ctx.shadowBlur = 0;
+                ctx.globalCompositeOperation = 'source-over';
                 ctx.globalAlpha = 1;
             });
 
-            let ca = 0, cb = 0;
-            nodes.forEach(n => {
-                if (n.owner === 'A') ca++;
-                if (n.owner === 'B') cb++;
-            });
-            const total = ca + cb || 1;
-            document.getElementById('pct-a').textContent = (ca / total * 100).toFixed(1) + '%';
-            document.getElementById('pct-b').textContent = (cb / total * 100).toFixed(1) + '%';
-
-            const activeEdges = edges.filter(e => nodes[e.a].owner || nodes[e.b].owner).length;
-            document.getElementById('edges').textContent = activeEdges;
+            document.getElementById('edges').textContent = edgeCount > 5000 ? '>5000' : edgeCount;
+            const tot = ca + cb || 1;
+            document.getElementById('pct-a').textContent = (ca / NODES * 100).toFixed(1) + '%';
+            document.getElementById('pct-b').textContent = (cb / NODES * 100).toFixed(1) + '%';
         }
 
         function loop() {
@@ -405,9 +408,11 @@
             requestAnimationFrame(loop);
         }
 
+        updateSpace();
         setInterval(updateSpace, 60000);
-        updateSpace().catch(console.warn);
         loop();
+
     </script>
 </body>
+
 </html>
