@@ -1,4 +1,4 @@
-ʼ<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
@@ -31,13 +31,13 @@
         #ui h1 {
             margin: 0 0 6px 0;
             font-size: 1.24em;
-            background: linear-gradient(90deg, #7dd3ff, #a78dff, #ff78d2);
+            background: linear-gradient(90deg, #a78dff, #ff78d2, #ff4eb8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: 1px;
         }
-        .civ-a { color: #5ac8ff; text-shadow: 0 0 10px #5ac8ff; }
-        .civ-b { color: #d02b6e; text-shadow: 0 0 12px #d02b6e; }
+        .civ-a { color: #9d8aff; text-shadow: 0 0 10px #9d8aff; }
+        .civ-b { color: #ff5ab5; text-shadow: 0 0 12px #ff5ab5; }
         .stats, .space-info {
             margin-top: 4px;
             opacity: 0.9;
@@ -85,7 +85,6 @@
             </div>
         </div>
     </div>
-
     <script>
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
@@ -216,7 +215,7 @@
         function simulate() {
             const now = Date.now();
             nodes.forEach(n => {
-                n.breath = Math.sin(now * 0.00028 + n.phase) * 0.5 + 0.5;
+                n.breath = Math.sin(now * 0.00028 + n.phase) * 0.5 + 0.5;   // повільніше дихання
             });
 
             nodes.forEach((n, i) => {
@@ -323,7 +322,7 @@
             drawNebula();
             drawGrain();
 
-            const time = Date.now() * 0.00042;
+            const time = Date.now() * 0.00042;   // повільніше
 
             ctx.lineCap = 'round';
             edges.forEach(e => {
@@ -336,8 +335,8 @@
                 let col;
                 if (n1.owner === n2.owner && n1.owner) {
                     col = n1.owner === 'A'
-                        ? `hsla(200, 90%, 68%, ${e.baseAlpha * (0.42 + n1.breath*0.58) * alphaMult})`   // Order — cyan-blue
-                        : `hsla(340, 88%, 58%, ${e.baseAlpha * (0.42 + n1.breath*0.58) * alphaMult})`; // Flux — crimson-magenta
+                        ? `hsla(248, 90%, 72%, ${e.baseAlpha * (0.42 + n1.breath*0.58) * alphaMult})`   // indigo-violet
+                        : `hsla(330, 92%, 64%, ${e.baseAlpha * (0.42 + n1.breath*0.58) * alphaMult})`; // deep magenta-red
                 } else {
                     const hue = (time*0.3 + (n1.phase + n2.phase) * 0.4) * 40 + 240;
                     col = `hsla(${hue % 360}, 70%, 58%, ${0.12 * alphaMult})`;
@@ -348,9 +347,9 @@
 
                 ctx.globalAlpha = alpha;
                 ctx.strokeStyle = col;
-                ctx.lineWidth = 0.8 + (n1.breath + n2.breath) * 1.7;
+                ctx.lineWidth = 0.8 + (n1.breath + n2.breath) * 1.7;   // трохи тонші лінії
 
-                const mx = (n1.x + n2.x)/2 + Math.sin(time*2.8 + n1.phase*1.1)*4;
+                const mx = (n1.x + n2.x)/2 + Math.sin(time*2.8 + n1.phase*1.1)*4;   // менш хаотично
                 const my = (n1.y + n2.y)/2 + Math.cos(time*3.1 + n2.phase*1.2)*4;
 
                 ctx.beginPath();
@@ -363,9 +362,9 @@
             nodes.forEach(n => {
                 if (!n.owner) return;
 
-                const pulse = Math.sin(n.phase + Date.now()*0.0009) * 1.2 + 1.8;
-                const baseGlow = n.owner === 'A' ? 'rgba(90,210,255,0.68)' : 'rgba(208,43,110,0.74)';
-                const fillCol = n.owner === 'A' ? '#a0e0ff' : '#ff6b9e';
+                const pulse = Math.sin(n.phase + Date.now()*0.0009) * 1.2 + 1.8;   // м’якша пульсація
+                const baseGlow = n.owner === 'A' ? 'rgba(160,140,255,0.68)' : 'rgba(255,90,190,0.74)';
+                const fillCol = n.owner === 'A' ? '#c4b8ff' : '#ff9edc';
                 const corruptionFade = 1 - n.corruption * 0.78;
 
                 ctx.shadowBlur = 18 + pulse * 6;
@@ -377,7 +376,7 @@
                 ctx.fill();
 
                 ctx.shadowBlur = 28;
-                ctx.fillStyle = n.owner === 'A' ? 'rgba(90,210,255,0.14)' : 'rgba(208,43,110,0.17)';
+                ctx.fillStyle = n.owner === 'A' ? 'rgba(160,140,255,0.14)' : 'rgba(255,90,190,0.17)';
                 ctx.beginPath();
                 ctx.arc(n.x, n.y, pulse * 2.2, 0, Math.PI*2);
                 ctx.fill();
