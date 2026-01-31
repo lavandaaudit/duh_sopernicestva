@@ -7,7 +7,7 @@
     <style>
         body {
             margin: 0;
-            background: radial-gradient(ellipse at center, #0a0015 0%, #000 70%);
+            background: radial-gradient(ellipse at center, #080012 0%, #000 75%);
             color: #e0d8ff;
             font-family: 'Segoe UI', system-ui, sans-serif;
             overflow: hidden;
@@ -49,6 +49,17 @@
             opacity: 0.75;
             font-size: 0.92em;
         }
+        .launch-info {
+            margin-top: 8px;
+            font-size: 0.74em;
+            opacity: 0.70;
+            line-height: 1.4;
+        }
+        .timer {
+            font-family: monospace;
+            letter-spacing: 0.8px;
+            color: #d0c0ff;
+        }
     </style>
 </head>
 <body>
@@ -69,6 +80,10 @@
             <span class="civ-a">Order</span> <span id="pct-a">0.0%</span>  |
             <span class="civ-b">Flux</span> <span id="pct-b">0.0%</span><br>
             Активних зв’язків: <span id="edges">0</span>
+            <div class="launch-info">
+                Запущено: <span id="launch-date">сьогодні о 00:00</span><br>
+                Час роботи: <span id="timer" class="timer">0 днів 00:00:00</span>
+            </div>
         </div>
     </div>
 
@@ -84,6 +99,33 @@
         window.addEventListener('resize', resize);
         resize();
 
+        // Дата запуску — сьогодні о 00:00 за місцевим часом
+        const launchDate = new Date();
+        launchDate.setHours(0, 0, 0, 0);
+        
+        // Виводимо дату запуску в зрозумілому форматі
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        document.getElementById('launch-date').textContent = 
+            launchDate.toLocaleDateString('uk-UA', options) + ' о 00:00';
+
+        function updateTimer() {
+            const now = new Date();
+            const diffMs = now - launchDate;
+            const diffSec = Math.floor(diffMs / 1000);
+
+            const days    = Math.floor(diffSec / 86400);
+            const hours   = Math.floor((diffSec % 86400) / 3600);
+            const minutes = Math.floor((diffSec % 3600) / 60);
+            const seconds = diffSec % 60;
+
+            document.getElementById('timer').textContent = 
+                `${days} днів ${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+        }
+
+        // Оновлюємо таймер кожну секунду
+        setInterval(updateTimer, 1000);
+        updateTimer(); // одразу показуємо
+
         const NODES = 520;
         const MAX_DIST = 168;
         const nodes = [];
@@ -97,18 +139,16 @@
                 this.strength = 1.0;
                 this.phase = Math.random() * Math.PI * 2;
                 this.breath = 0;
-                this.corruption = 0;     // 0..1 — чим вище, тим слабше світиться
+                this.corruption = 0;
             }
         }
 
-        // Генерація вузлів
         for (let i = 0; i < NODES; i++) {
             let x = Math.random() * w * 1.7 - w * 0.35;
             let y = Math.random() * h * 1.7 - h * 0.35;
             nodes.push(new Node(x, y));
         }
 
-        // Створення ребер
         for (let i = 0; i < NODES; i++) {
             for (let j = i + 1; j < NODES; j++) {
                 const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
@@ -123,7 +163,6 @@
             }
         }
 
-        // Початкові центри цивілізацій
         const centerA = { x: w * 0.28, y: h * 0.54 };
         const centerB = { x: w * 0.72, y: h * 0.46 };
 
@@ -140,7 +179,6 @@
         nodes[startA].owner = 'A';
         nodes[startB].owner = 'B';
 
-        // Реальні космічні дані
         let space = {
             kp: 2.3,
             flare: 'None',
@@ -150,39 +188,31 @@
             dst: -18
         };
 
-        // Оновлення реальних даних з NOAA
         async function updateSpace() {
             try {
-                // Kp
                 const kpRes = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
                 const kpData = await kpRes.json();
                 space.kp = parseFloat(kpData[kpData.length-1][1]) || space.kp;
 
-                // X-ray flares (остання значуща)
                 const flareRes = await fetch('https://services.swpc.noaa.gov/json/goes/primary/xray-flares-latest.json');
                 const flares = await flareRes.json();
                 const last = flares[flares.length-1] || {};
                 const cls = last.current_class || last.max_class || 'None';
                 space.flare = (cls.startsWith('M') || cls.startsWith('X')) ? cls[0] : 'None';
 
-                // Protons >10 MeV
                 const protonRes = await fetch('https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json');
                 const protons = await protonRes.json();
                 const p = protons.filter(p => p.energy === '>=10 MeV').pop();
                 space.proton = p ? p.flux : space.proton;
 
-                // Solar wind + Bz
                 const windRes = await fetch('https://services.swpc.noaa.gov/products/solar-wind/plasma-1-minute.json');
                 const wind = await windRes.json();
                 const lastWind = wind[wind.length-1] || {};
                 space.wind = parseFloat(lastWind[2]) || space.wind;
                 space.bz   = parseFloat(lastWind[3]) || space.bz;
 
-                // Dst (приблизно, з інших джерел або фіктивно поки що)
-                // Реальний Dst можна брати з Kyoto, але тут спрощено
                 space.dst = space.kp > 5 ? -50 - space.kp*12 : -10 - space.kp*4;
 
-                // Оновлення інтерфейсу
                 document.getElementById('kp').textContent     = space.kp.toFixed(1);
                 document.getElementById('flare').textContent  = space.flare;
                 document.getElementById('proton').textContent = space.proton > 100 ? 'extreme' : space.proton > 30 ? 'high' : space.proton > 10 ? 'elevated' : 'low';
@@ -194,17 +224,12 @@
             }
         }
 
-        // ────────────────────────────────────────────────
-        //          Симуляція з сильнішим впливом даних
-        // ────────────────────────────────────────────────
-
         function simulate() {
             const now = Date.now();
             nodes.forEach(n => {
                 n.breath = Math.sin(now * 0.00042 + n.phase) * 0.5 + 0.5;
             });
 
-            // Order (A) — стабільна, повільна експансія, пригнічується високим Kp
             nodes.forEach((n, i) => {
                 if (n.owner === 'A') {
                     const prob = 0.0058 * (1 - space.kp/9) * (1 + space.bz/20);
@@ -214,7 +239,6 @@
                 }
             });
 
-            // Flux (B) — швидка, хаотична експансія, підсилюється швидким вітром та негативним Bz
             nodes.forEach((n, i) => {
                 if (n.owner === 'B') {
                     const windFactor = (space.wind - 300) / 400;
@@ -226,7 +250,6 @@
                 }
             });
 
-            // Сонячні бурі → пошкодження та корупція
             const stormIntensity = 
                 (space.kp / 9) * 0.4 +
                 (space.proton > 30 ? (space.proton-20)/200 : 0) +
@@ -245,7 +268,6 @@
                 });
             }
 
-            // Повільне очищення корупції коли тихо
             if (stormIntensity < 0.1) {
                 nodes.forEach(n => {
                     if (n.corruption > 0) n.corruption -= 0.003;
@@ -267,7 +289,6 @@
 
             if (!candidates.length) return;
 
-            // B сортує з невеликим шумом (більш хаотично)
             if (civ === 'B') {
                 candidates.sort((a,b) => a.d - b.d + (Math.random()-0.5)*140);
             } else {
@@ -277,25 +298,34 @@
             nodes[candidates[0].i].owner = civ;
         }
 
-        // ────────────────────────────────────────────────
-        //                  Малювання
-        // ────────────────────────────────────────────────
+        function drawGrain() {
+            ctx.globalAlpha = 0.07;
+            ctx.fillStyle = '#111';
+            const grainSize = 2.2;
+            for (let i = 0; i < w * h / 9000; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const s = Math.random() * grainSize;
+                ctx.fillRect(x, y, s, s);
+            }
+            ctx.globalAlpha = 1;
+        }
 
         function drawNebula() {
             const t = Date.now() * 0.00008;
             ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.048;
+            ctx.globalAlpha = 0.028;
 
             const layers = [
-                { cx: w*0.36 + Math.sin(t*1.2)*110, cy: h*0.34 + Math.cos(t*0.95)*85, rIn:230, rOut:920, c1:'#3f005c', c2:'rgba(70,20,110,0.22)' },
-                { cx: w*0.66 + Math.cos(t*0.85)*140, cy: h*0.56 + Math.sin(t*1.4)*110, rIn:300, rOut:1180, c1:'#22003b', c2:'rgba(50,0,90,0.19)' },
-                { cx: w*0.14 + Math.sin(t*0.7+3)*80,  cy: h*0.76 + Math.cos(t*0.75+2)*90, rIn:200, rOut:780, c1:'#140028', c2:'rgba(35,0,75,0.16)' }
+                { cx: w*0.36 + Math.sin(t*1.2)*110, cy: h*0.34 + Math.cos(t*0.95)*85, rIn:230, rOut:920, c1:'#2a003f', c2:'rgba(50,10,80,0.14)' },
+                { cx: w*0.66 + Math.cos(t*0.85)*140, cy: h*0.56 + Math.sin(t*1.4)*110, rIn:300, rOut:1180, c1:'#140028', c2:'rgba(35,0,70,0.11)' },
+                { cx: w*0.14 + Math.sin(t*0.7+3)*80,  cy: h*0.76 + Math.cos(t*0.75+2)*90, rIn:200, rOut:780, c1:'#0c001a', c2:'rgba(25,0,55,0.09)' }
             ];
 
             layers.forEach(l => {
                 let grd = ctx.createRadialGradient(l.cx, l.cy, l.rIn, l.cx, l.cy, l.rOut);
                 grd.addColorStop(0,   l.c1);
-                grd.addColorStop(0.42,l.c2);
+                grd.addColorStop(0.45,l.c2);
                 grd.addColorStop(1,   'transparent');
                 ctx.fillStyle = grd;
                 ctx.fillRect(0,0,w,h);
@@ -306,10 +336,11 @@
         }
 
         function draw() {
-            ctx.fillStyle = 'rgba(0,0,10,0.13)';
+            ctx.fillStyle = 'rgba(0,0,8,0.16)';
             ctx.fillRect(0,0,w,h);
 
             drawNebula();
+            drawGrain();
 
             const time = Date.now() * 0.00065;
 
@@ -350,7 +381,6 @@
 
             ctx.globalAlpha = 1;
 
-            // Вузли
             nodes.forEach(n => {
                 if (!n.owner) return;
 
@@ -378,7 +408,6 @@
                 ctx.globalAlpha = 1;
             });
 
-            // Статистика
             let ca = 0, cb = 0;
             nodes.forEach(n => {
                 if (n.owner === 'A') ca++;
@@ -398,8 +427,7 @@
             requestAnimationFrame(loop);
         }
 
-        // Запуск
-        setInterval(updateSpace, 90000); // кожні 1.5 хв
+        setInterval(updateSpace, 60000);
         updateSpace().catch(console.warn);
         loop();
     </script>
