@@ -12,8 +12,8 @@
             font-family: 'Segoe UI', system-ui, sans-serif;
             overflow: hidden;
         }
-        canvas { 
-            display: block; 
+        canvas {
+            display: block;
             mix-blend-mode: screen;
         }
         #ui {
@@ -25,6 +25,7 @@
             line-height: 1.5;
             text-shadow: 0 0 10px #200040, 0 0 20px #400080;
             letter-spacing: 0.4px;
+            opacity: 0; /* приховуємо старий ui */
         }
         #bottom {
             position: absolute;
@@ -32,44 +33,65 @@
             left: 50%;
             transform: translateX(-50%);
             pointer-events: none;
-            font-size: 1.1em;
-            padding: 8px 24px;
+            font-size: 1.05em;
+            padding: 12px 28px;
             border-radius: 30px;
-            background: rgba(10,0,30,0.65);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(120,80,220,0.25);
+            background: rgba(10,0,30,0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(120,80,220,0.3);
             text-shadow: 0 0 8px #000;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .civ-a { color: #a78bff; text-shadow: 0 0 10px #a78bff; }
         .civ-b { color: #ff6ac2; text-shadow: 0 0 10px #ff6ac2; }
-        h1 { 
-            margin: 0 0 8px; 
-            font-size: 1.7em; 
+        h1 {
+            margin: 0 8px 0 0;
+            font-size: 1.6em;
             background: linear-gradient(90deg, #c4a8ff, #ff8ad8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+        .space-info {
+            display: flex;
+            gap: 18px;
+            font-size: 0.96em;
         }
     </style>
 </head>
 <body>
     <canvas id="c"></canvas>
+
     <div id="ui">
         <h1>🌌 IBONARIUM</h1>
         <div>Kp: <span id="kp">2.3</span></div>
         <div>Flares: <span id="flare">None</span></div>
         <div>Protons: <span id="proton">low</span></div>
     </div>
+
     <div id="bottom">
-        <span class="civ-a">Order:</span> <span id="pct-a">0%</span>  |
-        <span class="civ-b">Flux:</span> <span id="pct-b">0%</span>  |
-        Ниток: <span id="edges">0</span>
+        <h1>🌌 IBONARIUM</h1>
+
+        <div class="space-info">
+            Kp: <span id="kp">2.3</span>  |
+            Flares: <span id="flare">None</span>  |
+            Protons: <span id="proton">low</span>
+        </div>
+
+        <div>
+            <span class="civ-a">Order:</span> <span id="pct-a">0%</span>  |
+            <span class="civ-b">Flux:</span> <span id="pct-b">0%</span>  |
+            Ниток: <span id="edges">0</span>
+        </div>
     </div>
 
     <script>
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
         let w, h;
-
         function resize() {
             w = canvas.width = window.innerWidth;
             h = canvas.height = window.innerHeight;
@@ -126,15 +148,15 @@
         let space = { kp: 2.3, flare: 'None', proton: 12, wind: 380 };
 
         function updateSpace() {
-            space.kp    = Math.max(0, Math.min(8.7, space.kp + (Math.random()-0.5)*0.4));
+            space.kp = Math.max(0, Math.min(8.7, space.kp + (Math.random()-0.5)*0.4));
             space.proton = Math.max(0, space.proton + (Math.random()-0.5)*20);
-            space.wind  = 300 + Math.random()*450;
+            space.wind = 300 + Math.random()*450;
 
             if (Math.random() < 0.03) space.flare = Math.random() < 0.5 ? 'X' : 'M';
             if (Math.random() < 0.09) space.flare = 'None';
 
-            document.getElementById('kp').textContent     = space.kp.toFixed(1);
-            document.getElementById('flare').textContent  = space.flare;
+            document.getElementById('kp').textContent = space.kp.toFixed(1);
+            document.getElementById('flare').textContent = space.flare;
             document.getElementById('proton').textContent = space.proton > 50 ? 'extreme' : space.proton > 30 ? 'high' : 'low';
         }
 
@@ -179,7 +201,7 @@
             if (!candidates.length) return;
 
             if (civ === 'B') candidates.sort((a,b) => a.d - b.d + (Math.random()-0.5)*100);
-            else             candidates.sort((a,b) => a.d - b.d);
+            else candidates.sort((a,b) => a.d - b.d);
 
             nodes[candidates[0].i].owner = civ;
         }
@@ -222,12 +244,12 @@
                 ctx.quadraticCurveTo(mx, my, n2.x, n2.y);
                 ctx.stroke();
             });
+
             ctx.globalAlpha = 1;
 
             // Вузли
             nodes.forEach(n => {
                 if (!n.owner) return;
-
                 const pulse = Math.sin(n.phase + Date.now() * 0.0012) * 1.4 + 1.8;
                 const glow = n.owner === 'A'
                     ? 'rgba(180,140,255,0.7)'
@@ -235,8 +257,8 @@
 
                 ctx.shadowBlur = 18 + pulse * 6;
                 ctx.shadowColor = glow;
-
                 ctx.fillStyle = n.owner === 'A' ? '#d0c0ff' : '#ffb0e8';
+
                 ctx.beginPath();
                 ctx.arc(n.x, n.y, pulse * 0.9, 0, Math.PI*2);
                 ctx.fill();
@@ -255,8 +277,13 @@
             let ca = 0, cb = 0;
             nodes.forEach(n => { if(n.owner==='A') ca++; if(n.owner==='B') cb++; });
             const tot = ca + cb;
+
             document.getElementById('pct-a').textContent = tot ? (ca/tot*100).toFixed(1)+' %' : '0%';
             document.getElementById('pct-b').textContent = tot ? (cb/tot*100).toFixed(1)+' %' : '0%';
+
+            // Кількість ниток (ребер з хоча б одним власником)
+            const activeEdges = edges.filter(e => nodes[e.a].owner || nodes[e.b].owner).length;
+            document.getElementById('edges').textContent = activeEdges;
         }
 
         function loop() {
