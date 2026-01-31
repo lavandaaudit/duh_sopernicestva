@@ -18,47 +18,30 @@
         }
         #ui {
             position: absolute;
-            top: 18px;
-            left: 20px;
+            top: 14px;
+            left: 16px;
             pointer-events: none;
-            font-size: 0.95em;
-            line-height: 1.5;
-            text-shadow: 0 0 10px #200040, 0 0 20px #400080;
-            letter-spacing: 0.4px;
-            opacity: 0; /* приховуємо старий ui */
+            font-size: 0.82em;           /* менші букви */
+            line-height: 1.38;
+            text-shadow: 0 0 9px #200040, 0 0 18px #400080;
+            letter-spacing: 0.3px;
+            opacity: 0.92;
         }
-        #bottom {
-            position: absolute;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            pointer-events: none;
-            font-size: 1.05em;
-            padding: 12px 28px;
-            border-radius: 30px;
-            background: rgba(10,0,30,0.7);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(120,80,220,0.3);
-            text-shadow: 0 0 8px #000;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .civ-a { color: #a78bff; text-shadow: 0 0 10px #a78bff; }
-        .civ-b { color: #ff6ac2; text-shadow: 0 0 10px #ff6ac2; }
-        h1 {
-            margin: 0 8px 0 0;
-            font-size: 1.6em;
+        #ui h1 {
+            margin: 0 0 4px 0;
+            font-size: 1.18em;
             background: linear-gradient(90deg, #c4a8ff, #ff8ad8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .space-info {
-            display: flex;
-            gap: 18px;
-            font-size: 0.96em;
+        .civ-a { color: #a78bff; text-shadow: 0 0 9px #a78bff; }
+        .civ-b { color: #ff6ac2; text-shadow: 0 0 9px #ff6ac2; }
+        .stats {
+            margin-top: 6px;
+            opacity: 0.88;
+        }
+        .space-info div {
+            margin: 1px 0;
         }
     </style>
 </head>
@@ -67,21 +50,14 @@
 
     <div id="ui">
         <h1>🌌 IBONARIUM</h1>
-        <div>Kp: <span id="kp">2.3</span></div>
-        <div>Flares: <span id="flare">None</span></div>
-        <div>Protons: <span id="proton">low</span></div>
-    </div>
-
-    <div id="bottom">
-        <h1>🌌 IBONARIUM</h1>
 
         <div class="space-info">
-            Kp: <span id="kp">2.3</span>  |
-            Flares: <span id="flare">None</span>  |
-            Protons: <span id="proton">low</span>
+            <div>Kp: <span id="kp">2.3</span></div>
+            <div>Flares: <span id="flare">None</span></div>
+            <div>Protons: <span id="proton">low</span></div>
         </div>
 
-        <div>
+        <div class="stats">
             <span class="civ-a">Order:</span> <span id="pct-a">0%</span>  |
             <span class="civ-b">Flux:</span> <span id="pct-b">0%</span>  |
             Ниток: <span id="edges">0</span>
@@ -165,21 +141,18 @@
                 n.breath = Math.sin(Date.now() * 0.0003 + n.phase) * 0.5 + 0.5;
             });
 
-            // Order — повільне, стабільне
             nodes.forEach((n, i) => {
                 if (n.owner === 'A' && Math.random() < 0.0065 * (1 - space.kp/10)) {
                     growFrom(i, 'A', 1.25);
                 }
             });
 
-            // Flux — швидше, хаотичніше
             nodes.forEach((n, i) => {
                 if (n.owner === 'B' && Math.random() < 0.021 * (space.wind/450 + 0.4)) {
                     growFrom(i, 'B', 2.9 + Math.random()*1.6);
                 }
             });
 
-            // Деградація
             if (space.proton > 35 || space.flare !== 'None') {
                 nodes.forEach(n => {
                     if (n.owner && Math.random() < 0.0045 + space.proton*0.0009) {
@@ -212,7 +185,6 @@
 
             const time = Date.now() * 0.0006;
 
-            // Нитки — хвилясті, пульсуючі
             ctx.lineCap = 'round';
             edges.forEach(e => {
                 const n1 = nodes[e.a];
@@ -247,7 +219,6 @@
 
             ctx.globalAlpha = 1;
 
-            // Вузли
             nodes.forEach(n => {
                 if (!n.owner) return;
                 const pulse = Math.sin(n.phase + Date.now() * 0.0012) * 1.4 + 1.8;
@@ -263,7 +234,6 @@
                 ctx.arc(n.x, n.y, pulse * 0.9, 0, Math.PI*2);
                 ctx.fill();
 
-                // легкий слід
                 ctx.shadowBlur = 25;
                 ctx.fillStyle = n.owner === 'A' ? 'rgba(180,140,255,0.15)' : 'rgba(255,110,200,0.18)';
                 ctx.beginPath();
@@ -273,7 +243,6 @@
                 ctx.shadowBlur = 0;
             });
 
-            // Статистика
             let ca = 0, cb = 0;
             nodes.forEach(n => { if(n.owner==='A') ca++; if(n.owner==='B') cb++; });
             const tot = ca + cb;
@@ -281,7 +250,6 @@
             document.getElementById('pct-a').textContent = tot ? (ca/tot*100).toFixed(1)+' %' : '0%';
             document.getElementById('pct-b').textContent = tot ? (cb/tot*100).toFixed(1)+' %' : '0%';
 
-            // Кількість ниток (ребер з хоча б одним власником)
             const activeEdges = edges.filter(e => nodes[e.a].owner || nodes[e.b].owner).length;
             document.getElementById('edges').textContent = activeEdges;
         }
